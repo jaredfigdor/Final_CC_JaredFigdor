@@ -1,289 +1,388 @@
 //Jared Figdor
-
-let rows = 8;
-let cols = 10;
-let barFactor = 200;
-let moveRight = false;
-let moveLeft = false;
-let screen = 0;
-let yP = 580;
-let wP = 100;
-let hP = 15;
-let game = true;
-let velocityX = 6;
-let velocityY = 6;
+let paddle;  //initializing variables
+let ball; 
+let bricks; 
+let rows; 
+let cols; 
+let brickimg;
+let paddleW = false;
+let timer = 0;
 let score = 0;
-let lives = 3;
 let restart = false;
-let bricks = [];
-let colorArray = ["#B30F0C", "#B3360C", "#B3570C", "#B3810C", "#B3A50C", "#A2B30C", "#6DB30C", "#0CB320"];
-let ballSrc = {x: barFactor + 50, y: 580, radius: 20};
-let pSrc= {x: barFactor + 50,  y: 0};
-let pSpeed = 10;
-let Paddle;
-let balls;
+let bricksRemoved;
+let collide=false;
+let screens;
+let over = false;
+let notover = false;
+let hits;
+let brickSound;
+let paddleSound;
+let sec;
+var timerValue = 0;
+let backimg;
+let backmusic;
+function preload () { //loading images and sound
+  
+  brickimg = loadImage('brickimg.jpg');
+  brickSound = loadSound('brick.mp3');
+  paddleSound = loadSound('paddlesound.mp3');
+  backimg = loadImage('backimg.jpg');
+  backmusic = loadSound('backgrmusic.mp3');
+}
 
 
 function setup() {
-  createCanvas(800,600);
-  createBricks();
-}
+  createCanvas(770,600); //setting up and declaring my variables and objects
+  bricksRemoved=0;
+  paddle= new Paddle();
+  rows = 5;
+  cols = 14;
+  screens = 0;
+setInterval(timeIt, 1000);
+brickSound.setVolume(1);
+paddleSound.setVolume(1);
+  backmusic.setVolume(0.3); 
+  ball = new Ball();
+
+  
+} 
 
 
 function draw() {
-   pSpeed += 0.003;
-     
-  if (screen == 0){
-    startScreen();
-  }
-  if (game == true && restart == false && screen == 1){ 
-    ball()
-  }
-  if (restart == true && game == true){ 
-    lifeLost()
-  }
-  if (game == false && restart== true){ 
-    restartGame()
-  }
-  if (game== true && screen == 1) {
-    scoreDisplay();
-    livesDisplay();
-    drawBricks();
-    checkBricks();
-    paddle();
-    drawPaddle();
+
+  if (screens==0){ //the first screen is the starting screen
+    startscreens();
+  }else if(screens==2){ //screen 2 runs the game
+    background(backimg); //loading background image
+    scoreDisplay(); //displaying score
+    ball.move();  //calling class methods
+    paddle.move();
+    paddle.Collision(ball);
+     ball.display();
+    paddle.display();
     
-
-  }
-   if (score > 1){
-     pSpeed  += 3;
-     powerUp();
-   }
+    
+        for(let i = 0; i < rows; i ++){ //itterating though the amount of collumns and rows to display bricks
+      for(let j=0;j<cols;j++){
+        bricks[i][j].display();
+      }   
+    }
+     
   
+    
+        for(let i = 0; i < rows; i ++){ //checking for collisions checking every brick in each row and collumn
+      for(let j=0;j<cols;j++){
 
-  
-}
-
-
-
-function paddle() {
-this.x = barFactor
-  this.y = yP;
-  this.w = wP;
-  this.h = hP;
-
-}
-
-function drawPaddle(){
-
-  if (moveRight && barFactor < 700) {
-    barFactor += 10
-  }
-  if (moveLeft && barFactor > 0) {
-    barFactor += -10
-  }
-}
-
-function ball() {
-  background('black');
-  noStroke()
-  fill('white')
-  ellipse(ballSrc.x, ballSrc.y, ballSrc.radius, ballSrc.radius)
-  if (ballSrc.y <= 0) {
-    velocityY = -velocityY
-    score++
-  }
-  
-    Paddle = new paddle();
-    fill('red');
-  rect(barFactor, Paddle.y,Paddle.w ,Paddle.h);
-  if (ballSrc.y >= height - 20 && ballSrc.x > Paddle.x && ballSrc.x <= Paddle.x + wP) {//based on where it hits bar
-    velocityY = -velocityY
-    if (velocityX > 0) velocityX = -velocityX
-    if (velocityX < 0) velocityX = velocityX
-  }
-  //if (ballSrc.y >= height - 15 && ballSrc.x > barFactor + 50 && ballSrc.x <= barFactor + 100) {
-  //  velocityY = -velocityY
-   // if (velocityX > 0) velocityX = velocityX;
-  //  if (velocityX < 0) velocityX = -velocityX;
-//  }
-  if (ballSrc.x >= width - 10 || ballSrc.x <= 0) {
-    velocityX = -velocityX
-  }
-
-
-  
-  if (ballSrc.y > height) {
-    lives--;
-    restart = true;
-    if (lives === 0) game = false;
-  }
-  ballSrc.x += velocityX;
-  ballSrc.y += velocityY;
-}
-
-function createBricks() {
-  const brickWidth = width / cols;
-  for (let i = 0; i < cols; i++) {
-    for (let j = 0; j < rows; j++) {
-      let brick = {
-        x: i * 70 + 40,
-        y: j * 20 + 30,
-        width: 65,
-        height: 18,
-        color: colorArray[j]
+        bricks[i][j].Collision(ball); //calling the collision function to the respective brick
+   
       }
-      bricks.push(brick)
+    }
+    
+    if (bricksRemoved>=rows*cols){ //if all bricks are removed, show the winning screen
+      screens=4;
+    }
+
+  }else if (screens==3){ //if you lose, sho the game over screen
+    restartGame();
+  }else if (screens==4){ 
+    youWin();
+  }
+}
+
+class Paddle{  //creating paddle
+  constructor(){
+    this.width=100;
+    this.height=15;
+    this.x=width/2-this.width/2
+    this.y=550;
+  }
+  
+  display(){ 
+   
+    fill('red');
+    stroke(0);
+    strokeWeight(1.5);
+    rect(this.x,this.y,this.width,this.height);
+    if (paddleW == true){  //used for making the paddle wider after the boolean is flipped
+      this.width = 150;
+      timer ++;   //using a variable to control the time the text is on screen
+        textSize(26);
+        fill(255);
+      if (timer < 350){  //as long as the timer is under 350, the text will be on screen
+        text('Its getting fast! Paddle has been widened',200,592);
+      }
+    }
+    
+   
+  }
+  
+  Collision(ball){  //collision functiuon
+      if(collideRectCircle(this.x,this.y,this.width,this.height*0.25,  //p5 collide library function checking for collsion between a circle and rectangle
+                           ball.x,ball.y,ball.diameter)){
+        let theta= 3/4*PI *(ball.x-this.x)/this.width+1/8*PI;
+        ball.theta=PI-theta;
+        paddleSound.play();
+      }    
+  }
+  
+
+  move(){
+    if(keyIsDown(37)&&this.x>=0){ //if the left key os pressed, move the x position by a factor of 6
+      this.x-=6;
+      this.time=0;
+    }else if(keyIsDown(39)&&this.x+this.width<=width){  //if the right key os pressed, move the x position by a factor of 6
+      this.x+=6;
     }
   }
 }
 
-function drawBricks() {
-  bricks.forEach(brick => {
-    fill(brick.color)
-    rect(brick.x, brick.y, brick.width, brick.height)
-     
+class Ball{  //ball class
+  constructor(){
+    this.x=width/2;
+    this.y=500;
+    this.diameter=20;
+    this.velocity=3;
+    this.theta=PI/4;
+  }
 
-  })
+  display(){
+    
+    fill(255);
+    stroke(0);
+    strokeWeight(1);
+    ellipse(this.x,this.y,this.diameter);
+ 
+  }
+  
+  move(){
+    this.x+=this.velocity*cos(this.theta);
+    this.y-=this.velocity*sin(this.theta);
+    if(this.x+this.diameter/2>=width){
+      this.theta=PI-this.theta;
+      this.x=width-this.diameter/2;
+      
+    }else if(this.x-this.diameter/2<=0){
+      this.theta=PI-this.theta;
+      this.x=this.diameter/2;
+      
+    }
+    if(this.y+this.diameter/2>=height){ //if the ball goes below the paddle,  change to the game over scren
+      
 
+      screens= 3;
+      
+      
+    }
+    
+      
+    
+    if(this.y-this.diameter/2<=0){  //if the ball goes below the paddle, change the theta value
+      this.theta=2*PI-this.theta;
+    }
+
+  }
 }
 
-function keyPressed(value) {
-  if (value.key === 'ArrowRight') {
-    moveRight = true
+class Brick {  //creating bricks
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.width = 68;
+    this.height = 30;
+    if (random(1)>0.9){ //bricks have a small probability of recieving a hit value of 3
+      this.hit=3;
+    }else{
+      this.hit=1;
+    }
+    
+
   }
-  if (value.key === 'ArrowLeft') {
-    moveLeft = true
+  
+  display() {
+   
+
+    image(brickimg, this.x, this.y, this.width, this.height); //putting image as brick background
+    if (this.hit>=3){  //if the bricks recieve a hit value of 3, they will have two extra lines to indicate they need more hits
+      strokeWeight(5);
+      noFill();
+      line(this.x+20, this.y + 2, this.x+20, this.y+this.height - 2);
+      line(this.x+48, this.y + 2, this.x+48, this.y+this.height - 2);
+    }
+    if (this.hit>=2){ //removing one of the lines after collision
+      strokeWeight(5);
+      noFill();
+       line(this.x+48, this.y + 2, this.x+48, this.y+this.height - 2);
+      
+    }
+    
+
+    
   }
-  if (value.keyCode === 32 && restart == true) {
-    restart = false
-    ballSrc.x = barFactor + 50
-    ballSrc.y = 580
-  }
-  if (value.keyCode === 32 && game == false) {
-    game = true
-    ballSrc.x = barFactor + 50
-    ballSrc.y = 580
-    score = 0;
-    lives = 3;
-    velocityY = -6
-    barFactor = 250;
-    createBricks()
+  
+  Collision(ball) { //checking bricks for collision with ball
+    if(this.hit>0) {   //checking all 4 sides of the box for collision
+      if(collideLineCircle(this.x, this.y, this.x+this.width, this.y,
+                           ball.x, ball.y, ball.diameter)){
+        ball.theta=2*PI-ball.theta; //if collision is true, change ball theta
+        
+        this.hit--;  
+        score ++;  
+        this.p--;
+        brickSound.play();  //play sound when hit
+        ball.velocity+= 0.2;
+  
+      }else if(collideLineCircle(this.x, this.y+this.height, this.x+this.width, this.y+this.height,
+                                 ball.x, ball.y, ball.diameter)){
+        ball.theta=2*PI-ball.theta;
+        this.hit--;
+        score++;
+         this.p--;
+        ball.velocity+= 0.2;
+       brickSound.play();
+      }else if(collideLineCircle(this.x, this.y, this.x, this.y+this.height,
+                                 ball.x, ball.y, ball.diameter)){
+        ball.theta=PI-ball.theta;
+      ball.velocity+= 0.2;
+        this.hit--;
+         this.p--;
+        score++
+       brickSound.play();
+      }else if(collideLineCircle(this.x+this.width, this.y, this.x+this.width, this.y+this.height,
+                                 ball.x, ball.y, ball.diameter)){
+        ball.theta=PI-ball.theta;
+      ball.velocity+= 0.2;
+        this.hit--;
+         this.p--;
+        score++
+        brickSound.play();
+      }
+      
+    if (bricksRemoved > 8){ //after 8 bricks are gone, the paddle gets wider
+      paddleW = true;
+    }
+      
+  
+      if (this.hit<=0){ //if hit is 0 (box is gone), add 1 to the bricks removed list
+        bricksRemoved++;
+    
+        
+      }
+    }else{
+        
+        this.x = 1000; //if the hit gets below zero, move the brick off of the screen
+        this.y = 1000;
+       
+    }
+  
   }
 }
 
-function keyReleased(value) {
-  if (value.key === 'ArrowRight') {
-    moveRight = false
-  }
-  if (value.key === 'ArrowLeft') {
-    moveLeft = false
+
+
+function mousePressed(){
+  if (screens==3||screens==4){ //if mouse is pressed and the screen is 3 or 4
+    screens=0;  //go back to the starting screen
+    score = 0; //reset the score
+    backmusic.stop(); //stop the music
+    start();
+    timerValue = 0;
+    loop();
+  }else if (screens==0){ //if on starting screen
+    backmusic.play(); // play music
+      screens=2; //go to game
+    timerValue = 0;
+      start(); //reset game
+    
   }
 }
 
-function restartGame() {
+
+
+function restartGame() { //'game over' screen
   background(0);
   fill('red')
   textAlign(CENTER);
   noStroke()
   textStyle(BOLD);
-  textSize(38)
-  text('GAME OVER', 300, 170)
+  textSize(50);
+  text('GAME OVER', 380, 220)
   textSize(28);
   fill('white');
-  text('Final score: ' + score, 300, 200);
+  text('Total Bricks: ' + score, 380, 260);
+  text('Final Time: ' + timerValue + ' Seconds', 380,290);
   textSize(18);
-  text('Press SpaceBar to restart game', 300, 225);
+  text('Click to restart game', 380, 315);
 }
 
-function lifeLost() {
-  background(0);
-  fill('#FFEEEE')
-  textAlign(CENTER);
-  noStroke()
-  textStyle(BOLD);
-  textFont('Arial');
-  textSize(36)
-  text('Life Lost', 400, 350);
-  textFont('Arial');
-  textSize(24);
-  fill('green');
-  text(lives + ' lives remaining', 400, 375);
-  textSize(18);
-  fill('white');
-  text('Press SpaceBar to continue', 400, 400);
-}
 
-function scoreDisplay() {
-  fill('#FFEEEE')
-  textStyle(BOLD);
-  textAlign(CENTER);
-  noStroke();
-  textSize(20);
-  text('Score: ' + score, 750, 20);
-}
-
-function livesDisplay() {
-  textStyle(BOLD);
-  textAlign(CENTER);
-  noStroke()
-  textSize(18);
-  text('Lives: ' + lives, 40, 20);
-}
-
-function checkCollision(ball, brick) {
-  if (ball.y - 30 < brick.y && ball.x > brick.x && ball.x <= brick.x + 65) {
-    return true
-        
-  }
-}
-
-function startScreen(){
+function startscreens(){ //starting screen
     background(0);
     fill(255);
     textAlign(CENTER);
         textSize(40);
-    text('WELCOME TO BRICK BREAKER', width / 2, height / 2)
-    text('click to start', width / 2, height / 2 + 45);
+        textStyle(BOLD);
+    text('WELCOME TO BRICK BREAKER', width / 2, height / 3);
+        textStyle(NORMAL);
+        textSize(30);
+        text('Try and clear all the bricks!', width/2, 265);
+        text('Use the arrow keys to move', width/2, height /2 + 45);
+    text('click to start', width / 2, height / 2 + 130);
     
 }
 
-function mousePressed(){
-  if(screen==0){
-    screen=1;
-  }else if(screen==2){
-    screen=0;
-  }
-  
-}
-
-function powerUp(){
-  
- fill(255);
-  ellipse(pSrc.x,pSpeed,50,50);
-  if (pSpeed >= height - 25 && pSrc.x > Paddle.x && pSrc.x <= Paddle.x + wP){
-    wP = 200;
-    
-}
-}
-
-  function checkBricks(ball, brick){
-    bricks.forEach((item, index) => {
-    if(checkCollision(ballSrc, item)){
-      velocityY = -velocityY
-      score++
-      bricks.splice(index, 1);
-      
-      
    
+function start(){  //reset function used in beginning and when you lose, resets the variables and arrays as well as used in start to initiate
+  paddle= new Paddle();
+  bricks = [];
+  rows = 5;
+  cols = 14;
+   ball = new Ball();
+  for (let i = 0; i < rows; i ++ ){
+    let row=[];
+    for(let j = 0; j < cols; j++) {
+      row.push(new Brick(j*77 + 5, i*52+ 5));
     }
-  })
-    
-   
-  
+    bricks.push(row);
   }
-
-
-   
+ 
   
+  bricksRemoved=0;
+}
+ 
+function scoreDisplay(){ //display score and time
+  strokeWeight(0);
+  textSize(20);
+  fill(255);
+  text("Blocks Collected: " + score ,10, height-10);
+ 
+  text('Time: ' + timerValue , 10, height-40);
+  
+}
+
+function timeIt() { //function used to create a timer for game
+    if(screens==2){
+    timerValue ++;
+  }
+    
+  if(screens==3){
+    timerValue = timerValue;
+  }
+  
+  
+}
+
+function youWin() {  //screen showed if all bricks are removed
+  background(0);
+  fill('red')
+  textAlign(CENTER);
+  noStroke()
+  textStyle(BOLD);
+  textSize(50);
+  text('You Win!!', 380, 220)
+  fill('white');
+  textSize(18);
+  text('Click to restart game', 380, 260);
+}
+
+
   
