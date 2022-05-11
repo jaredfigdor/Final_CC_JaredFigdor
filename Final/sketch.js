@@ -1,4 +1,5 @@
 //Jared Figdor
+//p5 Collide 2d functon examples were refrenced
 let paddle;  //initializing variables
 let ball; 
 let bricks; 
@@ -24,8 +25,6 @@ let backmusic;
 function preload () { //loading images and sound
   
   brickimg = loadImage('brickimg.jpg');
- 
-
   backimg = loadImage('backimg.jpg');
 
 }
@@ -120,7 +119,7 @@ class Paddle{  //creating paddle
   Collision(ball){  //collision functiuon
       if(collideRectCircle(this.x,this.y,this.width,this.height*0.25,  //p5 collide library function checking for collsion between a circle and rectangle
                            ball.x,ball.y,ball.diameter)){
-        let theta= 3/4*PI *(ball.x-this.x)/this.width+1/8*PI;
+        let theta= 3/4*PI *(ball.x-this.x)/this.width+1/8*PI; //changing theta based on the position if the ball (gives us different velocity changes based on where it hits paddle)
         ball.theta=PI-theta;
         paddleSound.play();
       }    
@@ -130,7 +129,6 @@ class Paddle{  //creating paddle
   move(){
     if(keyIsDown(37)&&this.x>=0){ //if the left key os pressed, move the x position by a factor of 6
       this.x-=6;
-      this.time=0;
     }else if(keyIsDown(39)&&this.x+this.width<=width){  //if the right key os pressed, move the x position by a factor of 6
       this.x+=6;
     }
@@ -140,9 +138,9 @@ class Paddle{  //creating paddle
 class Ball{  //ball class
   constructor(){
     this.x=width/2;
+    this.velocity=3;
     this.y=500;
     this.diameter=20;
-    this.velocity=3;
     this.theta=PI/4;
   }
 
@@ -155,12 +153,12 @@ class Ball{  //ball class
  
   }
   
-  move(){
-    this.x+=this.velocity*cos(this.theta);
-    this.y-=this.velocity*sin(this.theta);
+  move(){  //function to move the ball
+    this.x+=this.velocity*cos(this.theta);  //change x by the velocity multiplied by the cos(theta)
+    this.y-=this.velocity*sin(this.theta);// changing y velocity
     if(this.x+this.diameter/2>=width){
-      this.theta=PI-this.theta;
-      this.x=width-this.diameter/2;
+      this.theta=PI-this.theta;     //if the ball hits the wall, subract theta from pi to change the direction
+      this.x=width-this.diameter/2; 
       
     }else if(this.x-this.diameter/2<=0){
       this.theta=PI-this.theta;
@@ -280,7 +278,7 @@ function mousePressed(){
   if (screens==3||screens==4){ //if mouse is pressed and the screen is 3 or 4
     screens=0;  //go back to the starting screen
     score = 0; //reset the score
-    backmusic.stop(); //stop the music
+    backmusic.pause(); //stop the music
     start();
     timerValue = 0;
     loop();
@@ -336,7 +334,7 @@ function start(){  //reset function used in beginning and when you lose, resets 
    ball = new Ball();
   for (let i = 0; i < rows; i ++ ){
     let row=[];
-    for(let j = 0; j < cols; j++) {
+    for(let j = 0; j < cols; j++) { //placing the bricks
       row.push(new Brick(j*77 + 5, i*52+ 5));
     }
     bricks.push(row);
@@ -352,7 +350,7 @@ function scoreDisplay(){ //display score and time
   fill(255);
   text("Blocks Collected: " + score ,85, height-10);
  
-  text('Time: ' + timerValue , 35, height-40);
+  text('Time: ' + timerValue , 30, height-40);
   
 }
 
