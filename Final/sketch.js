@@ -24,10 +24,10 @@ let backmusic;
 function preload () { //loading images and sound
   
   brickimg = loadImage('brickimg.jpg');
-  brickSound = loadSound('brick.mp3');
-  paddleSound = loadSound('paddlesound.mp3');
+ 
+
   backimg = loadImage('backimg.jpg');
-  backmusic = loadSound('backgrmusic.mp3');
+
 }
 
 
@@ -39,11 +39,12 @@ function setup() {
   cols = 14;
   screens = 0;
 setInterval(timeIt, 1000);
-brickSound.setVolume(1);
-paddleSound.setVolume(1);
-  backmusic.setVolume(0.3); 
-  ball = new Ball();
 
+
+  ball = new Ball();
+  brickSound = new Audio('brick.mp3');
+  backmusic = new Audio('backgrmusic.mp3');
+  paddleSound = new Audio('paddlesound.mp3');
   
 } 
 
@@ -221,43 +222,39 @@ class Brick {  //creating bricks
   
   Collision(ball) { //checking bricks for collision with ball
     if(this.hit>0) {   //checking all 4 sides of the box for collision
-      if(collideLineCircle(this.x, this.y, this.x+this.width, this.y,
+      if(collideLineCircle(this.x, this.y, this.x+this.width, this.y, // Using a p5 collide function to check for collision on bottom of brick
                            ball.x, ball.y, ball.diameter)){
         ball.theta=2*PI-ball.theta; //if collision is true, change ball theta
         
         this.hit--;  
         score ++;  
-        this.p--;
         brickSound.play();  //play sound when hit
         ball.velocity+= 0.2;
   
       }else if(collideLineCircle(this.x, this.y+this.height, this.x+this.width, this.y+this.height,
-                                 ball.x, ball.y, ball.diameter)){
+                                 ball.x, ball.y, ball.diameter)){  // Using p5 collide function to check for collision on top of the brick
         ball.theta=2*PI-ball.theta;
         this.hit--;
         score++;
-         this.p--;
-        ball.velocity+= 0.2;
+        ball.velocity+= 0.2; // increase velocity on each hit
        brickSound.play();
       }else if(collideLineCircle(this.x, this.y, this.x, this.y+this.height,
-                                 ball.x, ball.y, ball.diameter)){
+                                 ball.x, ball.y, ball.diameter)){ //Using p5 collide function to check for collision on the left side of the brick
         ball.theta=PI-ball.theta;
       ball.velocity+= 0.2;
         this.hit--;
-         this.p--;
         score++
        brickSound.play();
       }else if(collideLineCircle(this.x+this.width, this.y, this.x+this.width, this.y+this.height,
-                                 ball.x, ball.y, ball.diameter)){
+                                 ball.x, ball.y, ball.diameter)){ //Using p5 collide function to check for collision using 
         ball.theta=PI-ball.theta;
       ball.velocity+= 0.2;
         this.hit--;
-         this.p--;
         score++
         brickSound.play();
       }
       
-    if (bricksRemoved > 8){ //after 8 bricks are gone, the paddle gets wider
+    if (bricksRemoved > 10){ //after 10 bricks are gone, the paddle gets wider
       paddleW = true;
     }
       
@@ -269,8 +266,8 @@ class Brick {  //creating bricks
       }
     }else{
         
-        this.x = 1000; //if the hit gets below zero, move the brick off of the screen
-        this.y = 1000;
+        this.x = 1200; //if the hit gets below zero, move the brick off of the screen
+        this.y = 1200;
        
     }
   
@@ -353,9 +350,9 @@ function scoreDisplay(){ //display score and time
   strokeWeight(0);
   textSize(20);
   fill(255);
-  text("Blocks Collected: " + score ,10, height-10);
+  text("Blocks Collected: " + score ,85, height-10);
  
-  text('Time: ' + timerValue , 10, height-40);
+  text('Time: ' + timerValue , 35, height-40);
   
 }
 
