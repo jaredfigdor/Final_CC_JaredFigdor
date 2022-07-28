@@ -21,7 +21,7 @@ let paddleSound;
 let sec;
 var timerValue = 0;
 let backimg;
-let backmusic;
+
 function preload () { //loading images and sound
   
   brickimg = loadImage('brickimg.jpg');
@@ -42,7 +42,6 @@ setInterval(timeIt, 1000);
 
   ball = new Ball();
   brickSound = new Audio('brick.mp3');
-  backmusic = new Audio('backgrmusic.mp3');
   paddleSound = new Audio('paddlesound.mp3');
   
 } 
@@ -278,12 +277,12 @@ function mousePressed(){
   if (screens==3||screens==4){ //if mouse is pressed and the screen is 3 or 4
     screens=0;  //go back to the starting screen
     score = 0; //reset the score
-    backmusic.pause(); //stop the music
+
     start();
     timerValue = 0;
     loop();
   }else if (screens==0){ //if on starting screen
-    backmusic.play(); // play music
+
       screens=2; //go to game
     timerValue = 0;
       start(); //reset game
